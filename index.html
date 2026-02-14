@@ -1,0 +1,1662 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI建築見積システム v10.0</title>
+  
+  <link rel="icon" href="https://drive.google.com/uc?export=view&id=169_3_Fc8Pbj5fkqX6_KHFb3lNJAKkKnA">
+  <link rel="apple-touch-icon" href="https://drive.google.com/uc?export=view&id=169_3_Fc8Pbj5fkqX6_KHFb3lNJAKkKnA">
+  
+  <style>
+    body { margin: 0; padding: 0; font-family: sans-serif; background-color: #E0F2F1; }
+    [v-cloak] { display: none !important; }
+    #critical-error { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #ffebee; color: #b71c1c; z-index: 9999; padding: 20px; box-sizing: border-box; overflow: auto; font-family: monospace; white-space: pre-wrap; }
+  </style>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+  <style>
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: #f1f1f1; }
+    ::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
+    
+    :root { --bg-legacy: #E0F2F1; --header-bg: #004D40; --table-th-bg: #B2DFDB; }
+    body { background-color: var(--bg-legacy); font-family: 'MS PGothic', 'Noto Sans JP', sans-serif; color: #333; font-size: 13px; margin-bottom: 50px; }
+    .loader { border: 4px solid #f3f3f3; border-top: 4px solid #3b82f6; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    .legacy-card { background-color: #F1F8E9; border: 1px solid #888; box-shadow: 2px 2px 5px rgba(0,0,0,0.1); }
+    .menu-card { transition: all 0.2s ease; border: 2px solid #ccc; }
+    .menu-card:hover { transform: scale(1.02); box-shadow: 0 4px 10px rgba(0,0,0,0.1); border-color: #666; }
+    .grid-legacy { border: 1px solid #666; border-collapse: collapse; width: 100%; font-size: 12px; }
+    .grid-legacy th { background-color: var(--table-th-bg); border: 1px solid #666; padding: 4px; text-align: center; font-weight: normal; white-space: nowrap; }
+    .grid-legacy td { border: 1px solid #666; padding: 0; background: #fff; height: 28px; vertical-align: middle; }
+    .input-cell { width: 100%; height: 100%; border: none; padding: 2px 4px; background: transparent; outline: none; font-family: inherit; }
+    .input-cell:focus { background-color: #FFF9C4; } 
+    textarea.input-cell { resize: none; overflow: hidden; line-height: 1.2; padding-top: 6px; }
+    .num-cell { text-align: right; padding-right: 8px !important; }
+    .function-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #ddd; border-top: 1px solid #999; display: flex; padding: 6px; gap: 6px; justify-content: center; z-index: 100; box-shadow: 0 -2px 5px rgba(0,0,0,0.1); }
+    .f-btn { background: linear-gradient(to bottom, #fff, #e0e0e0); border: 1px solid #888; padding: 4px 16px; font-size: 12px; border-radius: 3px; cursor: pointer; color: #333; min-width: 100px; text-align: center; display: flex; align-items: center; justify-content: center; }
+    .f-btn:hover { background: #eee; }
+    .f-btn:active { transform: translateY(1px); }
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200; display: flex; align-items: center; justify-content: center; }
+    .modal-content { background: #fff; border: 2px solid #555; width: 90%; max-width: 800px; max-height: 80vh; display: flex; flex-direction: column; }
+    .modal-header { background: var(--header-bg); color: #fff; padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; }
+    .modal-body { padding: 10px; overflow-y: auto; flex: 1; }
+    .menu-btn { background: #fff; border: 1px solid #bbb; padding: 20px; text-align: center; cursor: pointer; transition: all 0.2s; border-radius: 4px; box-shadow: 2px 2px 0 #ccc; }
+    .menu-btn:hover { transform: translateY(-2px); box-shadow: 4px 4px 0 #bbb; }
+    .menu-icon { font-size: 48px; display: block; margin: 0 auto 10px; }
+    .menu-title { font-size: 16px; font-weight: bold; color: #333; }
+    .input-base { width: 100%; border: 1px solid #ccc; padding: 2px 4px; background: #fff; outline: none; }
+    .modal-enter-active, .modal-leave-active { transition: opacity 0.3s ease; }
+    .modal-enter-from, .modal-leave-to { opacity: 0; }
+    
+    .toast-container { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 3000; display: flex; flex-direction: column; gap: 10px; pointer-events: none; width: 90%; max-width: 400px; }
+    .toast { background: #333; color: #fff; padding: 12px 20px; border-radius: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); font-size: 14px; pointer-events: auto; display: flex; align-items: center; gap: 10px; justify-content: center; font-weight: bold; }
+    .toast.success { background: #43A047; }
+    .toast.error { background: #E53935; }
+    .toast-enter-active, .toast-leave-active { transition: all 0.3s ease; }
+    .toast-enter-from, .toast-leave-to { opacity: 0; transform: translateY(-20px); }
+    
+    .stat-card { background: #fff; border: 1px solid #999; padding: 10px; border-radius: 4px; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+    .stat-val { font-size: 18px; font-weight: bold; font-family: 'mono'; color: #004D40; }
+    .stat-label { font-size: 10px; color: #666; }
+    
+    .suggestions { position: absolute; background: white; border: 1px solid #ccc; z-index: 1000; max-height: 200px; overflow-y: auto; width: 200px; box-shadow: 2px 2px 5px rgba(0,0,0,0.2); }
+    .suggestion-item { padding: 4px 8px; cursor: pointer; font-size: 12px; }
+    .suggestion-item:hover { background-color: #e0f2f1; }
+    
+    .side-panel {
+      position: fixed;
+      top: 50px;
+      right: 0;
+      bottom: 0; 
+      width: 400px; 
+      background: white;
+      border-left: 1px solid #ccc;
+      box-shadow: -2px 0 5px rgba(0,0,0,0.1);
+      z-index: 40;
+      transition: transform 0.3s ease;
+      transform: translateX(100%);
+      display: flex;
+      flex-direction: column;
+    }
+    .side-panel.open { transform: translateX(0); }
+    
+    /* モード切替タブ */
+    .panel-tabs {
+      display: flex;
+      background: #f0f0f0;
+      border-bottom: 1px solid #ccc;
+    }
+    .panel-tab {
+      flex: 1;
+      padding: 10px;
+      text-align: center;
+      font-size: 12px;
+      font-weight: bold;
+      cursor: pointer;
+      color: #666;
+      border-bottom: 3px solid transparent;
+    }
+    .panel-tab.active {
+      color: #004D40;
+      border-bottom: 3px solid #004D40;
+      background: #fff;
+    }
+
+    .side-panel-content { flex: 1; overflow-y: auto; padding: 8px; }
+    .history-card { border: 1px solid #ddd; margin-bottom: 8px; padding: 6px; border-radius: 4px; background: #fafafa; }
+    .history-header { font-size: 11px; font-weight: bold; color: #555; margin-bottom: 4px; border-bottom: 1px dashed #ccc; }
+    .history-item { font-size: 11px; padding: 2px 0; border-bottom: 1px solid #eee; cursor: pointer; display: flex; justify-content: space-between; }
+    .history-item:hover { background-color: #e3f2fd; }
+  </style>
+  
+  <script>
+    window.showCriticalError = function(msg) {
+        document.getElementById('loading-fallback').style.display = 'none';
+        const el = document.getElementById('critical-error');
+        el.style.display = 'block';
+        el.innerHTML = '<h3>システムエラーが発生しました</h3><pre>' + msg + '</pre><p>リロードしてください。解決しない場合は管理者に連絡してください。</p>';
+        console.error("Critical Error:", msg);
+    };
+    setTimeout(function() {
+        const app = document.getElementById('app');
+        if (app && app.getAttribute('v-cloak') !== null) {
+            window.showCriticalError('Startup Timeout: Vue.js failed to mount within 10 seconds.\nCheck console for details.');
+        }
+    }, 10000);
+  </script>
+</head>
+<body class="text-gray-900">
+  
+  <div id="loading-fallback" style="position:fixed; inset:0; z-index:9999; display:flex; flex-direction:column; align-items:center; justify-content:center; background-color:#F5F5F5; font-family:sans-serif;">
+    <div style="font-size:24px; font-weight:bold; color:#333; margin-bottom:16px;">AI建築見積システム v10.0</div>
+    <div class="loader"></div>
+    <p style="margin-top:16px; color:#666;">システムを起動しています...</p>
+    <p style="margin-top:8px; font-size:12px; color:#999;">※長時間変わらない場合はリロードしてください</p>
+  </div>
+
+  <div id="critical-error"></div>
+
+  <div id="app" v-cloak>
+    <div class="toast-container">
+      <transition-group name="toast">
+        <div v-for="n in notifications" :key="n.id" class="toast" :class="n.type">
+          <span class="material-icons" style="font-size:18px">{{ n.type === 'success' ? 'check_circle' : 'error' }}</span>
+          {{ n.message }}
+        </div>
+      </transition-group>
+    </div>
+
+    <transition name="modal">
+      <div v-if="confirmState.show" class="modal-overlay" style="z-index: 3001;">
+        <div class="bg-white p-6 rounded shadow-xl max-w-sm w-full border border-gray-300">
+          <div class="text-base mb-6 text-gray-800 whitespace-pre-wrap">{{ confirmState.message }}</div>
+          <div class="flex justify-end gap-3">
+            <button @click="handleConfirm(false)" class="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 font-bold text-sm">キャンセル</button>
+            <button @click="handleConfirm(true)" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 font-bold text-sm shadow">OK</button>
+          </div>
+        </div>
+      </div>
+    </transition>
+    
+    <!-- Vendor Selection Modal -->
+    <transition name="modal">
+      <div v-if="showVendorSelectModal" class="modal-overlay" style="z-index: 3005;">
+        <div class="bg-white p-6 rounded shadow-xl max-w-sm w-full border border-gray-300">
+          <h3 class="font-bold text-lg mb-4 text-gray-800">発注先を選択してください</h3>
+          <div class="flex flex-col gap-2 mb-4 max-h-60 overflow-y-auto">
+            <button v-for="v in vendorCandidates" :key="v" @click="selectVendorAndPrint(v)" 
+                    class="px-4 py-3 bg-gray-100 hover:bg-orange-100 border text-left rounded font-bold text-sm transition">
+              {{ v }}
+            </button>
+          </div>
+          <button @click="showVendorSelectModal=false" class="w-full px-4 py-2 border text-gray-500 rounded hover:bg-gray-100 text-xs">キャンセル</button>
+        </div>
+      </div>
+    </transition>
+
+    <!-- Ledger Modal -->
+    <transition name="modal">
+      <div v-if="showLedgerModal" class="modal-overlay" style="z-index: 2500;">
+        <div class="modal-content w-full max-w-4xl h-[85vh]">
+          <div class="modal-header"><span>工事台帳詳細</span><button @click="showLedgerModal=false">×</button></div>
+          <div class="modal-body p-4" v-if="ledgerData">
+             <div class="flex justify-between items-end border-b-2 border-gray-500 pb-2 mb-4">
+                 <div>
+                     <div class="text-xs text-gray-500">工事番号: {{ ledgerData.project.id }}</div>
+                     <div class="text-xl font-bold">{{ ledgerData.project.project }}</div>
+                     <div class="text-sm">{{ ledgerData.project.client }} 様</div>
+                 </div>
+                 <div class="text-right">
+                     <button @click="createLedgerPdf" class="bg-blue-600 text-white px-4 py-1.5 rounded shadow font-bold text-sm hover:bg-blue-700">PDF発行</button>
+                 </div>
+             </div>
+             
+             <!-- Summary Cards -->
+             <div class="grid grid-cols-4 gap-2 mb-6">
+                 <div class="p-3 bg-gray-50 border rounded text-center">
+                     <div class="text-xs text-gray-500 font-bold">売上 (受注)</div>
+                     <div class="text-lg font-mono font-bold">{{ formatCurrency(ledgerData.sales) }}</div>
+                 </div>
+                 <div class="p-3 bg-red-50 border border-red-200 rounded text-center">
+                     <div class="text-xs text-red-500 font-bold">原価 (発注)</div>
+                     <div class="text-lg font-mono font-bold text-red-700">{{ formatCurrency(ledgerData.totalOrder) }}</div>
+                 </div>
+                 <div class="p-3 bg-green-50 border border-green-200 rounded text-center">
+                     <div class="text-xs text-green-500 font-bold">粗利 (予定)</div>
+                     <div class="text-lg font-mono font-bold text-green-700">{{ formatCurrency(ledgerData.profit) }}</div>
+                 </div>
+                 <div class="p-3 bg-yellow-50 border border-yellow-200 rounded text-center">
+                     <div class="text-xs text-yellow-600 font-bold">利益率 / 支払済</div>
+                     <div class="text-sm font-bold">{{ ledgerData.profitRate }}% / {{ formatCurrency(ledgerData.totalPayment) }}</div>
+                 </div>
+             </div>
+             
+             <div class="text-sm font-bold mb-1 border-l-4 border-blue-500 pl-2">発注・支払明細</div>
+             <table class="grid-legacy">
+                 <thead>
+                     <tr><th class="w-24">日付</th><th class="w-16">区分</th><th>業者名 / 摘要</th><th class="w-24 text-right">発注金額</th><th class="w-24 text-right">支払済</th></tr>
+                 </thead>
+                 <tbody>
+                     <tr v-for="o in ledgerData.orders" class="hover:bg-gray-50">
+                         <td class="text-center">{{ o.date }}</td>
+                         <td class="text-center"><span class="bg-gray-200 px-1 rounded text-[10px]">発注</span></td>
+                         <td class="pl-2">
+                             <div class="font-bold">{{ o.vendor }}</div>
+                             <div class="text-xs text-gray-500">{{ o.item }}</div>
+                         </td>
+                         <td class="text-right num-cell">{{ formatCurrency(o.amount) }}</td>
+                         <td class="text-right num-cell">-</td>
+                     </tr>
+                     <tr v-for="inv in ledgerData.invoices" class="bg-green-50 hover:bg-green-100">
+                         <td class="text-center">{{ inv.date }}</td>
+                         <td class="text-center"><span class="bg-green-200 text-green-800 px-1 rounded text-[10px]">支払</span></td>
+                         <td class="pl-2">
+                             <div class="font-bold">{{ inv.vendor }}</div>
+                             <div class="text-xs text-gray-500">{{ inv.item }}</div>
+                         </td>
+                         <td class="text-right num-cell">-</td>
+                         <td class="text-right num-cell font-bold">{{ formatCurrency(inv.amount) }}</td>
+                     </tr>
+                 </tbody>
+             </table>
+          </div>
+        </div>
+      </div>
+    </transition>
+
+    <!-- Preview Modal (Journal) -->
+    <transition name="modal">
+      <div v-if="showPreviewModal" class="modal-overlay" style="z-index: 2500;">
+        <div class="modal-content w-full max-w-5xl h-[80vh]">
+          <div class="modal-header"><span>仕訳データプレビュー</span><button @click="showPreviewModal=false">×</button></div>
+          <div class="modal-body">
+             <div v-if="previewData.headers" class="overflow-auto">
+                 <table class="grid-legacy">
+                     <thead>
+                         <tr><th v-for="h in previewData.headers">{{ h }}</th></tr>
+                     </thead>
+                     <tbody>
+                         <tr v-for="row in previewData.rows">
+                             <td v-for="c in row" class="text-xs px-1 whitespace-nowrap">{{ c }}</td>
+                         </tr>
+                     </tbody>
+                 </table>
+             </div>
+             <div v-else class="text-center p-4">データがありません</div>
+          </div>
+          <div class="p-2 border-t flex justify-end">
+              <button @click="downloadJournalCsv" class="bg-green-600 text-white px-4 py-2 rounded font-bold">CSVダウンロード</button>
+          </div>
+        </div>
+      </div>
+    </transition>
+
+    <header style="background-color: var(--header-bg); color: white; padding: 8px 16px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
+      <div class="flex items-center gap-2 cursor-pointer" @click="goHome">
+        <span class="material-icons">architecture</span>
+        <span class="font-bold text-lg">AI建築見積システム <span style="font-size: 10px; font-weight: normal;">v10.0</span></span>
+      </div>
+      <div class="text-xs flex gap-4 items-center">
+        <span>{{ userEmail }}</span>
+        <span v-if="auth && auth.isAdmin" class="bg-yellow-500 text-black px-1 rounded">管理者</span>
+        <button v-if="currentTab !== 'menu'" @click="goHome" class="bg-white text-black px-2 py-1 rounded border border-gray-400 hover:bg-gray-200">メニュー</button>
+      </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto p-4 mb-16">
+      <div v-if="loading" class="flex flex-col items-center justify-center h-64"><div class="loader mb-4"></div><p>{{ loadingMessage }}</p></div>
+
+      <div v-else>
+        <!-- メニュー画面 -->
+        <div v-if="currentTab === 'menu'" class="max-w-4xl mx-auto">
+          <div class="grid grid-cols-2 gap-4">
+            <div class="menu-btn" @click="createNewEstimate">
+              <span class="material-icons menu-icon text-blue-600">description</span>
+              <div class="menu-title">見積書作成</div>
+              <div class="text-xs text-gray-500 mt-2">OCR取込、過去データ参照、新規作成。</div>
+            </div>
+            
+            <div class="menu-btn" @click="handleNavigation('edit')">
+              <span class="material-icons menu-icon text-orange-500">shopping_cart</span>
+              <div class="menu-title">発注・原価管理</div>
+              <div class="text-xs text-gray-500 mt-2">見積画面から一括操作</div>
+            </div>
+            
+            <div class="menu-btn" @click="goToProjectList">
+              <span class="material-icons menu-icon text-indigo-500">analytics</span>
+              <div class="menu-title">案件一覧・売上統計</div>
+              <div class="text-xs text-gray-500 mt-2">進捗確認、売上集計。</div>
+            </div>
+
+            <div class="menu-btn" @click="goToInvoice">
+              <span class="material-icons menu-icon text-pink-600">receipt_long</span>
+              <div class="menu-title">請求書受取</div>
+              <div class="text-xs text-gray-500 mt-2">受取請求書の確認・登録。</div>
+            </div>
+
+            <div v-if="auth && auth.isAdmin" class="menu-btn" @click="goToAdmin">
+              <span class="material-icons menu-icon text-yellow-600">admin_panel_settings</span>
+              <div class="menu-title">管理者画面</div>
+              <div class="text-xs text-gray-500 mt-2">承認フロー、マスタ管理。</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 案件一覧 -->
+        <div v-if="currentTab === 'list'" class="space-y-4">
+          <div class="bg-white p-4 border border-gray-400 rounded shadow-sm">
+            <div class="flex flex-wrap gap-4 items-end mb-4">
+              <div><label class="text-[10px] block font-bold">表示年</label><select v-model="filter.year" class="border p-1 text-xs w-24 bg-gray-50"><option value="">全て</option><option v-for="y in years" :value="y">{{y}}年</option></select></div>
+              <div><label class="text-[10px] block font-bold">表示月</label><select v-model="filter.month" class="border p-1 text-xs w-24 bg-gray-50"><option value="">全て</option><option v-for="m in 12" :value="m">{{m}}月</option></select></div>
+              <div><label class="text-[10px] block font-bold">元請企業</label><select v-model="filter.client" class="border p-1 text-xs w-40 bg-gray-50"><option value="">全ての元請</option><option v-for="c in masters.clients" :value="c">{{c}}</option></select></div>
+            </div>
+            <div class="grid grid-cols-2 md:grid-cols-6 gap-2">
+              <div class="stat-card"><div class="stat-label">総売上(見積)</div><div class="stat-val">{{ formatCurrency(stats.totalSales) }}</div></div>
+              <div class="stat-card"><div class="stat-label">総原価(発注)</div><div class="stat-val text-orange-800">{{ formatCurrency(stats.totalCost) }}</div></div>
+              <div class="stat-card"><div class="stat-label">受取請求総額</div><div class="stat-val text-purple-800">{{ formatCurrency(stats.totalInvoiced) }}</div></div>
+              <div class="stat-card"><div class="stat-label">粗利(予定)</div><div class="stat-val" :class="stats.totalProfit < 0 ? 'text-red-600':''">{{ formatCurrency(stats.totalProfit) }}</div></div>
+              <div class="stat-card"><div class="stat-label">平均粗利率</div><div class="stat-val" :class="Number(stats.margin) < 15 ? 'text-red-600':''">{{ stats.margin }}%</div></div>
+              <div class="stat-card"><div class="stat-label">支払予定残</div><div class="stat-val text-red-600">{{ formatCurrency(stats.pendingPayment) }}</div></div>
+            </div>
+          </div>
+
+          <div class="bg-white border border-gray-400 rounded overflow-hidden">
+            <div class="bg-teal-50 p-2 text-xs font-bold border-b border-gray-400 flex justify-between">
+              <span>詳細リスト ({{ filteredProjects.length }}件)</span>
+              <span class="text-gray-500">※発注データがあるものは粗利を表示します</span>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="grid-legacy">
+                <thead>
+                  <tr>
+                    <th style="width:80px">日付</th><th>顧客名</th><th>工事名</th><th style="width:80px">売上(見積)</th><th style="width:80px">発注(予定)</th><th style="width:80px">請求(確定)</th><th style="width:70px">粗利</th><th style="width:40px">%</th><th style="width:50px">状態</th><th style="width:80px">操作</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="p in filteredProjects" :key="p.id" class="hover:bg-yellow-50 transition">
+                    <td class="text-center">{{ p.date }}</td><td class="font-bold text-center">{{ p.client }}</td><td class="text-center truncate max-w-xs">{{ p.project }}</td>
+                    <td class="text-right num-cell font-mono">{{ formatCurrency(p.totalAmount) }}</td>
+                    <td class="text-right num-cell font-mono text-orange-900">{{ formatCurrency(p.totalOrderAmount) }}</td>
+                    <td class="text-right num-cell font-mono text-purple-900 font-bold">{{ formatCurrency(p.totalInvoicedAmount) }}</td>
+                    <td class="text-right num-cell font-mono" :class="p.totalAmount-p.totalOrderAmount < 0 ? 'text-red-600 font-bold':''">{{ formatCurrency(p.totalAmount - p.totalOrderAmount) }}</td>
+                    <td class="text-center text-[10px]" :class="((p.totalAmount-p.totalOrderAmount)/p.totalAmount*100) < 15 ? 'text-red-600':''">{{ p.totalAmount ? ((p.totalAmount-p.totalOrderAmount)/p.totalAmount*100).toFixed(0) : 0 }}%</td>
+                    <td class="text-center text-[10px]"><span class="bg-gray-100 px-1 rounded">{{ p.status }}</span></td>
+                    <td class="text-center">
+                        <button @click="loadEstimate(p.id, true)" class="text-blue-700 underline text-[10px] hover:text-blue-900 mr-2">開く</button>
+                        <button @click="openLedger(p.id)" class="text-green-700 underline text-[10px] hover:text-green-900">台帳</button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 編集画面(見積) -->
+        <div v-if="currentTab === 'edit'" class="space-y-4">
+          <div class="flex justify-between items-center bg-white p-3 border border-gray-400 rounded shadow-sm">
+             <h2 class="font-bold text-lg flex items-center gap-2"><span class="material-icons text-blue-600">edit_note</span> 見積・発注 統合編集</h2>
+             <div class="flex items-center gap-2">
+               <!-- 見積履歴ボタン -->
+               <button @click="toggleSidePanel('history')" class="bg-indigo-50 text-indigo-700 border border-indigo-300 px-3 py-1.5 text-xs font-bold rounded hover:bg-indigo-100 shadow-sm transition flex items-center gap-1">
+                  <span class="material-icons text-[14px]">history</span> 見積履歴
+               </button>
+               <!-- 発注書作成ボタン -->
+               <button @click="toggleSidePanel('order')" class="bg-orange-50 text-orange-700 border border-orange-300 px-3 py-1.5 text-xs font-bold rounded hover:bg-orange-100 shadow-sm transition flex items-center gap-1">
+                  <span class="material-icons text-[14px]">shopping_cart</span> 発注書作成
+               </button>
+               
+               <button v-if="showBackButton || isReviewMode" @click="handleBack" class="bg-gray-100 border border-gray-400 px-4 py-1.5 text-xs font-bold rounded hover:bg-gray-200 shadow-sm transition flex items-center gap-1">
+                  <span class="material-icons text-[14px]">arrow_back</span> 戻る
+               </button>
+               <button @click="clearEstimateForm" class="bg-red-50 text-red-700 border border-red-300 px-4 py-1.5 text-xs font-bold rounded hover:bg-red-100 shadow-sm transition flex items-center gap-1">
+                  <span class="material-icons text-[14px]">delete_sweep</span> クリア
+               </button>
+             </div>
+          </div>
+          
+          <div class="flex gap-2">
+              <div class="flex-1 legacy-card p-4 rounded shadow-inner relative">
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-2 mb-4 bg-white/50 p-2 rounded border border-black/10">
+                  <div class="flex items-center relative">
+                      <label class="w-16 text-xs font-bold">顧客名:</label>
+                      <input type="text" v-model="form.header.client" @input="onClientInput" list="client-list" class="input-base text-xs">
+                      <datalist id="client-list"><option v-for="c in masters.clients" :value="c"></option></datalist>
+                  </div>
+                  <div class="flex items-center"><label class="w-16 text-xs font-bold">状態:</label><select v-model="form.header.status" class="input-base text-xs"><option>下書き</option><option>見積提出</option><option>成約</option><option>失注</option><option>保留</option><option>管理者確認中</option></select></div>
+                  <div class="flex items-center"><label class="w-16 text-xs font-bold">工事名:</label><input type="text" v-model="form.header.project" class="input-base text-xs"></div>
+                  <div class="flex items-center"><label class="w-16 text-xs font-bold">工事場所:</label><input type="text" v-model="form.header.location" class="input-base text-xs"></div>
+                  <div class="flex items-center"><label class="w-16 text-xs font-bold">工期:</label><input type="text" v-model="form.header.period" class="input-base text-xs"></div>
+                  <div class="flex items-center"><label class="w-16 text-xs font-bold">支払条件:</label><input type="text" v-model="form.header.payment" class="input-base text-xs"></div>
+                  <div class="flex items-center"><label class="w-16 text-xs font-bold">有効期限:</label><input type="text" v-model="form.header.expiry" class="input-base text-xs"></div>
+                  <div class="md:col-span-1"></div>
+                </div>
+                
+                <div style="height: calc(100vh - 350px); overflow: auto; border: 1px solid #999;">
+                  <table class="grid-legacy w-full min-w-[1000px]">
+                    <thead style="position: sticky; top: 0; z-index: 10;">
+                      <tr>
+                        <th rowspan="2" style="width:30px;"></th><th rowspan="2" style="width:80px;">工種</th><th rowspan="2" style="width:140px;">品名</th><th rowspan="2" style="width:100px;">仕様</th><th rowspan="2" style="width:50px;">数量</th><th rowspan="2" style="width:40px;">単位</th>
+                        <th colspan="2" class="bg-blue-100 text-blue-900 border-l border-r border-blue-300">【見積（売価）】</th>
+                        <th colspan="4" class="bg-orange-100 text-orange-900 border-l border-r border-orange-300">【実行（原価）/ 発注】</th>
+                        <th rowspan="2" class="w-16 bg-green-100 text-green-900">粗利%</th>
+                      </tr>
+                      <tr>
+                        <th style="width:80px;" class="bg-blue-50">単価</th><th style="width:90px;" class="bg-blue-50">金額</th>
+                        <th style="width:120px;" class="bg-orange-50">発注先</th><th style="width:80px;" class="bg-orange-50">原価単価</th><th style="width:60px;" class="bg-orange-50">発注数</th><th style="width:80px;" class="bg-orange-50">発注金額</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-for="(item, idx) in form.items" :key="idx" :id="'item-row-' + idx" 
+                          class="hover:bg-gray-50 transition-colors duration-150"
+                          @click="handleEstimateRowClick(item)"
+                          :class="{'cursor-pointer hover:bg-orange-100 border-l-4 border-orange-500': sidePanelMode === 'order'}">
+                        <td class="text-center bg-gray-100 cursor-pointer hover:bg-red-200" @click.stop="removeItem(idx)">{{ idx+1 }}</td>
+                        <td><textarea v-model="item.category" class="input-cell" rows="1" v-auto-resize @click.stop></textarea></td>
+                        <td class="relative">
+                            <textarea v-model="item.product" @focus="showSuggestions(idx)" @blur="hideSuggestions" class="input-cell font-bold" placeholder="品名" rows="1" v-auto-resize @click.stop></textarea>
+                            <div v-if="activeSuggestionIdx === idx" class="suggestions">
+                                <div v-for="s in filteredSuggestions" @mousedown="applySuggestion(idx, s)" class="suggestion-item">{{ s.product }}</div>
+                            </div>
+                        </td>
+                        <td><textarea v-model="item.spec" class="input-cell text-xs" placeholder="仕様" rows="1" v-auto-resize @click.stop></textarea></td>
+                        <td><input type="number" v-model="item.qty" class="input-cell num-cell bg-blue-50" @input="calcLine(item)" @click.stop></td>
+                        <td><input v-model="item.unit" class="input-cell text-center" @click.stop></td>
+                        <td style="background:#E3F2FD" class="relative group">
+                            <input type="number" v-model="item.price" class="input-cell num-cell" @input="calcLine(item)" @click.stop>
+                            <button v-if="!item.price && item.product" @click.stop="predictPrice(item)" class="absolute top-0 left-0 bg-purple-600 text-white text-[10px] px-1 opacity-20 hover:opacity-100 transition-opacity" title="AI単価予測">AI</button>
+                        </td>
+                        <td class="num-cell font-mono bg-blue-100 font-bold text-blue-900">{{ formatCurrency(item.amount) }}</td>
+                        
+                        <!-- 発注エリア -->
+                        <td class="bg-orange-50"><input v-model="item.vendor" list="vl" class="input-cell text-xs" placeholder="業者選択..." @click.stop><datalist id="vl"><option v-for="v in masters.vendors" :value="v.displayName"></option></datalist></td>
+                        <td class="bg-orange-50"><input type="number" v-model="item.cost" class="input-cell num-cell" @input="calcLine(item)" @click.stop></td>
+                        <td class="bg-orange-50"><input type="number" v-model="item.qty" class="input-cell num-cell" readonly title="見積数と同数" @click.stop></td>
+                        <td class="num-cell font-mono bg-orange-100 text-orange-900 font-bold">{{ formatCurrency(Math.round((item.qty||0)*(item.cost||0))) }}</td>
+                        
+                        <td class="text-right num-cell font-bold" :class="Number(calculateMargin(item)) < 15 ? 'text-red-500' : 'text-green-700'">
+                          <span v-if="Number(item.price) && Number(item.qty)">{{ calculateMargin(item) }}%</span>
+                          <span v-else class="text-gray-400">-</span>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                  <button @click="addItem" class="mt-2 w-full py-2 border border-dashed border-gray-400 text-gray-500 text-xs hover:bg-white transition font-bold">+ 行追加</button>
+                </div>
+                
+                <div class="mt-2 flex justify-end gap-6 text-sm font-bold p-3 bg-white border border-gray-400 shadow-sm">
+                   <div class="text-orange-800">発注合計(原価): <span class="text-xl">{{ formatCurrency(totalEstimatedCost) }}</span></div>
+                   <div class="text-blue-900 border-l pl-4 border-gray-400">見積合計(売上): <span class="text-xl">{{ formatCurrency(totalAmount) }}</span></div>
+                   <div class="border-l pl-4 border-gray-400" :class="totalAmount-totalEstimatedCost >= 0 ? 'text-green-700' : 'text-red-700'">
+                       粗利: <span class="text-xl">{{ formatCurrency(totalAmount-totalEstimatedCost) }}</span>
+                       <span class="text-xs bg-gray-200 px-1 rounded ml-1">{{ totalAmount ? (((totalAmount - totalEstimatedCost) / totalAmount) * 100).toFixed(1) : 0 }}%</span>
+                   </div>
+                </div>
+
+                <!-- サイドパネル (マルチモード) -->
+                <div class="side-panel" :class="{ 'open': sidePanelMode !== null }">
+                  <div class="bg-gray-100 border-b border-gray-300 flex justify-between items-center px-2 py-1">
+                    <span class="font-bold text-sm text-gray-700">
+                      {{ sidePanelMode === 'history' ? '見積履歴 (最新順)' : '発注書作成パネル' }}
+                    </span>
+                    <button @click="sidePanelMode = null" class="text-gray-500 hover:text-gray-800 font-bold text-lg px-2">×</button>
+                  </div>
+                  
+                  <div class="panel-tabs" v-if="sidePanelMode">
+                    <div class="panel-tab" :class="{ active: sidePanelMode === 'history' }" @click="toggleSidePanel('history')">
+                      <span class="material-icons text-sm align-middle">history</span> 履歴参照
+                    </div>
+                    <div class="panel-tab" :class="{ active: sidePanelMode === 'order' }" @click="toggleSidePanel('order')">
+                      <span class="material-icons text-sm align-middle">edit_note</span> 発注作成
+                    </div>
+                  </div>
+
+                  <div class="side-panel-content flex-1 overflow-y-auto bg-gray-50 relative">
+                    
+                    <!-- 1. 見積履歴モード -->
+                    <div v-if="sidePanelMode === 'history'">
+                      <div v-if="isDraftLoading" class="p-4 text-center"><div class="loader mx-auto w-6 h-6 border-2"></div></div>
+                      <div v-else>
+                        <div v-if="historyList.length === 0" class="p-4 text-center text-xs text-gray-500">履歴がありません</div>
+                        <div v-for="h in historyList" :key="h.id" @click="selectDraft(h.id)" class="history-card cursor-pointer hover:bg-blue-50 transition">
+                            <div class="flex justify-between items-center mb-1">
+                                <span class="font-bold text-xs text-blue-800">{{ h.date }}</span>
+                                <span class="text-[10px] px-1 rounded bg-gray-200">{{ h.status }}</span>
+                            </div>
+                            <div class="text-xs font-bold text-gray-700 truncate">{{ h.client }}</div>
+                            <div class="text-[10px] text-gray-500 truncate mb-1">{{ h.project }}</div>
+                            <div class="text-right font-mono text-sm font-bold text-gray-800">{{ formatCurrency(h.totalAmount) }}</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- 2. 発注書作成モード (Phase 4 対応) -->
+                    <div v-if="sidePanelMode === 'order'" class="flex flex-col h-full">
+                        <!-- パネル内タブ -->
+                        <div class="flex border-b text-xs font-bold bg-white shadow-sm">
+                            <button class="flex-1 py-2 text-center border-b-2 transition-colors" 
+                                    :class="orderPanelTab==='create' ? 'border-orange-500 text-orange-700 bg-orange-50' : 'border-transparent text-gray-500 hover:bg-gray-50'" 
+                                    @click="orderPanelTab='create'">
+                                <span class="material-icons text-sm align-middle mr-1">add_circle</span>新規作成
+                            </button>
+                            <button class="flex-1 py-2 text-center border-b-2 transition-colors" 
+                                    :class="orderPanelTab==='list' ? 'border-orange-500 text-orange-700 bg-orange-50' : 'border-transparent text-gray-500 hover:bg-gray-50'" 
+                                    @click="orderPanelTab='list'; fetchOrders();">
+                                <span class="material-icons text-sm align-middle mr-1">list</span>保存済み一覧
+                            </button>
+                        </div>
+
+                        <!-- タブ1: 新規作成 -->
+                        <div v-if="orderPanelTab === 'create'" class="flex-1 overflow-y-auto">
+                            <div class="p-2 text-xs bg-blue-50 text-blue-800 border-b border-blue-200 mb-2">
+                                <span class="material-icons text-sm align-middle">info</span> 左側の見積明細をクリックして転記
+                            </div>
+                            
+                            <div class="p-2 border-b border-gray-300 bg-white">
+                                <div class="mb-2">
+                                    <label class="text-xs font-bold block mb-1">発注先 (業者)</label>
+                                    <input v-model="orderInPanel.vendor" list="vl" class="w-full border p-1 text-xs" placeholder="業者を選択">
+                                </div>
+                            </div>
+                            
+                            <div v-if="orderInPanel.items.length === 0" class="p-8 text-center text-gray-400 text-xs">
+                                明細がありません。<br>見積行をクリックしてください。
+                            </div>
+                            
+                            <div v-for="(item, i) in orderInPanel.items" :key="i" class="bg-white p-2 border-b border-gray-200 text-xs relative group hover:bg-orange-50">
+                                <button @click="orderInPanel.items.splice(i, 1)" class="absolute top-1 right-1 text-gray-400 hover:text-red-500 font-bold">×</button>
+                                <div class="font-bold mb-1 pr-4">{{ item.product }} <span class="text-gray-500 font-normal">{{ item.spec }}</span></div>
+                                <div class="flex gap-2 items-center mb-1">
+                                    <input v-model="item.qty" type="number" class="border p-1 w-16 text-right" placeholder="数量">
+                                    <span>{{ item.unit }}</span>
+                                    <span class="text-gray-400">×</span>
+                                    <input v-model="item.cost" type="number" class="border p-1 w-20 text-right" placeholder="単価">
+                                </div>
+                                <div class="text-right font-mono text-orange-800 font-bold">{{ formatCurrency((item.qty||0)*(item.cost||0)) }}</div>
+                            </div>
+                            
+                            <div v-if="orderInPanel.items.length > 0" class="p-3 border-t bg-gray-100 sticky bottom-0 flex gap-2 flex-col">
+                                <button @click="saveOrderFromPanel" class="w-full bg-orange-600 text-white py-2 rounded font-bold text-xs shadow hover:bg-orange-700 flex items-center justify-center gap-1">
+                                    <span class="material-icons text-sm">save</span> 保存して作成
+                                </button>
+                                <button @click="createOrderPdfFromPanel" class="w-full bg-white text-blue-600 border border-blue-600 py-2 rounded font-bold text-xs shadow-sm hover:bg-blue-50 flex items-center justify-center gap-1">
+                                    <span class="material-icons text-sm">print</span> 保存せずプレビュー
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- タブ2: 保存済み一覧 -->
+                        <div v-if="orderPanelTab === 'list'" class="flex-1 overflow-y-auto bg-gray-50">
+                            <div v-if="!form.header.id" class="p-4 text-center text-gray-500 text-xs">
+                                見積が保存されていません
+                            </div>
+                            <div v-else-if="currentEstimateOrders.length === 0" class="p-4 text-center text-gray-500 text-xs">
+                                発行済みの発注書はありません
+                            </div>
+                            <div v-else>
+                                <div v-for="o in currentEstimateOrders" :key="o.id" class="bg-white p-3 border-b border-gray-200 hover:bg-gray-50 transition">
+                                    <div class="flex justify-between items-start mb-1">
+                                        <div class="font-bold text-sm text-gray-800">{{ o.vendor }}</div>
+                                        <span class="text-[10px] bg-green-100 text-green-800 px-1 rounded">{{ o.date }}</span>
+                                    </div>
+                                    <div class="flex justify-between items-center">
+                                        <div class="text-xs text-gray-500">ID: {{ o.id }}</div>
+                                        <div class="font-mono font-bold text-orange-800">{{ formatCurrency(o.totalAmount) }}</div>
+                                    </div>
+                                    <button @click="reprintOrderPdf(o.id)" class="w-full mt-2 bg-gray-100 text-gray-700 border border-gray-300 py-1 rounded text-xs hover:bg-gray-200 flex items-center justify-center gap-1">
+                                        <span class="material-icons text-sm">picture_as_pdf</span> PDF再発行
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                  </div>
+                </div>
+
+              </div>
+          </div>
+        </div>
+
+        <!-- 請求書受取処理画面 -->
+        <div v-if="currentTab === 'invoice'" class="space-y-4">
+            <div class="flex justify-between items-center bg-white p-2 border border-gray-400 rounded">
+                <h2 class="font-bold">請求書受取処理 (Googleドライブ連携)</h2>
+                <button @click="goHome" class="bg-gray-200 border border-gray-400 px-3 py-1 text-xs hover:bg-gray-300">メニューへ戻る</button>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 h-[calc(100vh-350px)]">
+                <div class="bg-white border border-gray-400 p-2 flex flex-col h-full">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="font-bold text-xs">未処理ファイル</span>
+                        <button @click="loadInvoiceFiles" class="text-xs text-blue-600 underline">更新</button>
+                    </div>
+                    <div class="flex-1 overflow-y-auto border border-gray-300">
+                        <div v-if="invoiceFiles.length === 0" class="p-2 text-xs text-gray-500 text-center">ファイルがありません</div>
+                        <div v-for="f in invoiceFiles" :key="f.id" 
+                             @click="selectInvoiceFile(f)"
+                             class="p-2 border-b cursor-pointer hover:bg-blue-100 text-xs"
+                             :class="selectedInvoiceFile && selectedInvoiceFile.id === f.id ? 'bg-blue-200' : ''">
+                            <div class="font-bold truncate">{{ f.name }}</div>
+                            <div class="text-gray-500">{{ f.updated }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="md:col-span-2 bg-white border border-gray-400 p-4 h-full overflow-y-auto">
+                    <div v-if="invoiceForm.id" class="bg-yellow-100 text-yellow-800 p-2 mb-2 text-xs font-bold border border-yellow-300 flex justify-between items-center">
+                        <span>編集中 (ID: {{ invoiceForm.id }})</span>
+                        <button @click="resetInvoiceForm" class="text-blue-600 underline">新規入力へ戻る</button>
+                    </div>
+
+                    <div v-if="!selectedInvoiceFile && !invoiceForm.id" class="flex items-center justify-center h-full text-gray-400">
+                        左側のリストからファイルを選択するか、下のリストから編集対象を選んでください
+                    </div>
+                    
+                    <div v-else class="space-y-4">
+                        <div v-if="selectedInvoiceFile" class="bg-blue-50 p-2 border border-blue-200 text-xs">
+                            <span class="font-bold">ファイル選択中:</span> {{ selectedInvoiceFile.name }}
+                            <span v-if="isAnalyzing" class="ml-2 text-blue-600 font-bold animate-pulse">解析中...</span>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold mb-1">工事名 (検索・選択)</label>
+                                <input v-model="invoiceForm.project" list="active-projects" @change="onProjectSelect" class="input-base bg-yellow-50" placeholder="入力して検索...">
+                                <datalist id="active-projects">
+                                    <option v-for="p in activeProjects" :value="p.name" :data-id="p.id"></option>
+                                </datalist>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold mb-1">工事番号 (自動)</label>
+                                <input v-model="invoiceForm.constructionId" class="input-base bg-gray-100" readonly>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-xs font-bold mb-1">請求元</label>
+                                <input type="text" v-model="invoiceForm.supplier" @change="checkOrderBalance" list="vendor-list" class="input-base bg-yellow-50">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold mb-1">請求日</label>
+                                <input type="text" v-model="invoiceForm.date" class="input-base" placeholder="yyyy/MM/dd">
+                            </div>
+
+                            <div v-if="orderBalance" class="col-span-2 bg-orange-50 border border-orange-200 p-2 text-xs flex justify-between items-center">
+                                <div>
+                                    <span class="font-bold text-orange-800">発注情報:</span> 
+                                    発注額: {{ formatCurrency(orderBalance.totalOrder) }} / 
+                                    既払: {{ formatCurrency(orderBalance.totalPaid) }}
+                                </div>
+                                <div class="font-bold" :class="orderBalance.balance < 0 ? 'text-red-600' : 'text-blue-600'">
+                                    発注残: {{ formatCurrency(orderBalance.balance) }}
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold mb-1">請求金額 (税込)</label>
+                                <input type="number" v-model="invoiceForm.amount" class="input-base text-right font-mono text-lg">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold mb-1">相殺額</label>
+                                <input type="number" v-model="invoiceForm.offset" class="input-base text-right font-mono text-lg text-red-600">
+                            </div>
+                            <div class="col-span-2">
+                                <label class="block text-xs font-bold mb-1">内容</label>
+                                <input type="text" v-model="invoiceForm.content" class="input-base">
+                            </div>
+                            <div class="col-span-2 text-right font-bold text-lg border-t pt-2">
+                                支払予定額: {{ formatCurrency(invoiceForm.amount - invoiceForm.offset) }}
+                            </div>
+                        </div>
+
+                        <div class="flex justify-end pt-4">
+                            <button @click="registerInvoice" class="bg-green-600 text-white px-6 py-2 rounded shadow hover:bg-green-700 font-bold">
+                                {{ invoiceForm.id ? '更新する' : '確定・登録する' }}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-4 border-t border-gray-400 pt-2">
+                <div class="flex justify-between items-center mb-2">
+                    <span class="font-bold text-sm">登録済み請求書一覧 (編集は行をクリック)</span>
+                    <button @click="fetchInvoices" class="text-xs text-blue-600 underline">リスト更新</button>
+                </div>
+                <div class="overflow-x-auto bg-white border border-gray-300 h-40">
+                     <table class="grid-legacy">
+                        <thead>
+                           <tr>
+                             <th>日時</th><th>ステータス</th><th>工事名</th><th>請求元</th><th>金額</th><th>操作</th>
+                           </tr>
+                        </thead>
+                        <tbody>
+                           <tr v-for="inv in adminInvoices" :key="inv.id" class="hover:bg-yellow-50 cursor-pointer" @click="editInvoice(inv)">
+                               <td class="text-center text-[10px]">{{ inv.registeredAt }}</td>
+                               <td class="text-center text-xs">{{ inv.status }}</td>
+                               <td class="pl-2 text-xs truncate max-w-xs">{{ inv.project }}</td>
+                               <td class="pl-2 text-xs">{{ inv.supplier }}</td>
+                               <td class="text-right num-cell font-mono">{{ formatCurrency(inv.amount) }}</td>
+                               <td class="text-center"><button class="bg-gray-200 border px-2 py-0.5 text-[10px]">編集</button></td>
+                           </tr>
+                        </tbody>
+                     </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 管理者画面 -->
+        <div v-if="currentTab === 'admin'" class="max-w-6xl mx-auto space-y-6">
+          <div class="flex border-b border-gray-400 mb-4">
+              <button @click="adminSubTab='approval'" class="px-4 py-2 font-bold" :class="adminSubTab==='approval' ? 'bg-yellow-100 border-b-2 border-yellow-600' : 'text-gray-500'">承認・管理</button>
+              <button @click="loadAnalysis" class="px-4 py-2 font-bold" :class="adminSubTab==='analysis' ? 'bg-indigo-100 border-b-2 border-indigo-600' : 'text-gray-500'">経営分析</button>
+          </div>
+
+          <!-- 承認・管理タブ -->
+          <div v-if="adminSubTab === 'approval'" class="space-y-6">
+              <div class="legacy-card p-4">
+                <h2 class="font-bold border-b border-gray-400 mb-2">承認待ち見積書</h2>
+                <table class="grid-legacy">
+                   <thead><tr><th>日付</th><th>顧客名</th><th>工事名</th><th class="text-right">金額</th><th>操作</th><th>削除</th></tr></thead>
+                   <tbody>
+                       <tr v-for="p in adminProjects" :key="p.id">
+                           <td class="text-center">{{ p.date }}</td>
+                           <td class="font-bold text-center">{{ p.client }}</td>
+                           <td class="text-center">{{ p.project }}</td>
+                           <td class="text-right">{{ formatCurrency(p.totalAmount) }}</td>
+                           <td class="text-center"><button @click="loadEstimate(p.id)" class="bg-yellow-400 border border-yellow-600 px-2 text-xs">確認</button></td>
+                           <td class="text-center"><button @click="deleteItem(p.id)" class="bg-red-500 text-white px-2 py-1 text-xs rounded hover:bg-red-600">削除</button></td>
+                       </tr>
+                   </tbody>
+                </table>
+                <div v-if="adminProjects.length===0" class="text-center py-4 text-gray-500">承認待ち見積書はありません</div>
+              </div>
+              
+              <div class="legacy-card p-4">
+                <h2 class="font-bold border-b border-gray-400 mb-2">承認待ち発注書</h2>
+                <table class="grid-legacy">
+                   <thead><tr><th>日付</th><th>発注先</th><th>納品場所</th><th class="text-right">金額</th><th>操作</th><th>削除</th></tr></thead>
+                   <tbody>
+                       <tr v-for="o in adminOrders" :key="o.id">
+                           <td class="text-center">{{ o.date }}</td>
+                           <td class="font-bold text-center">{{ o.vendor }}</td>
+                           <td class="text-center">{{ o.location }}</td>
+                           <td class="text-right">{{ formatCurrency(o.totalAmount) }}</td>
+                           <td class="text-center"><button @click="loadOrder(o.id, true)" class="bg-yellow-400 border border-yellow-600 px-2 text-xs">確認</button></td>
+                           <td class="text-center"><button @click="deleteItem(o.id)" class="bg-red-500 text-white px-2 py-1 text-xs rounded hover:bg-red-600">削除</button></td>
+                       </tr>
+                   </tbody>
+                </table>
+                <div v-if="adminOrders.length===0" class="text-center py-4 text-gray-500">承認待ち発注書はありません</div>
+              </div>
+
+              <!-- 受取請求書管理 & 会計連携 -->
+               <div class="legacy-card p-4 mt-6">
+                  <h2 class="font-bold border-b border-gray-400 mb-2 flex items-center gap-2">
+                      <span class="material-icons text-green-600">file_download</span> 会計連携 (CSV出力)
+                  </h2>
+                  <div class="flex items-end gap-4 p-2 bg-gray-50 flex-wrap">
+                      <div>
+                          <label class="block text-xs font-bold mb-1">対象年</label>
+                          <select v-model="journalYear" class="border p-1 text-sm">
+                              <option v-for="y in journalYears" :value="y">{{ y }}年</option>
+                          </select>
+                      </div>
+                      <div>
+                          <label class="block text-xs font-bold mb-1">対象月</label>
+                          <select v-model="journalMonth" class="border p-1 text-sm">
+                              <option v-for="m in 12" :value="m">{{ m }}月</option>
+                          </select>
+                      </div>
+                      <div class="flex gap-2 items-center text-sm font-bold">
+                          <label><input type="checkbox" v-model="journalIncludePurchases"> 仕入(請求書)</label>
+                          <label><input type="checkbox" v-model="journalIncludeSales"> 売上(見積/請求)</label>
+                      </div>
+                      <div class="flex-1 text-right">
+                        <button @click="showPreview" class="bg-blue-600 text-white px-4 py-1.5 rounded shadow hover:bg-blue-700 text-sm font-bold flex items-center gap-1 ml-auto mb-1">
+                            <span class="material-icons text-sm">table_view</span> プレビュー
+                        </button>
+                        <button @click="downloadJournalCsv" class="bg-green-600 text-white px-4 py-1.5 rounded shadow hover:bg-green-700 text-sm font-bold flex items-center gap-1 ml-auto">
+                            <span class="material-icons text-sm">download</span> CSV出力
+                        </button>
+                      </div>
+                  </div>
+                  <div class="text-xs text-gray-500 mt-1 pl-2">※「確認済」または「支払済」の受取請求書のみ出力されます。</div>
+               </div>
+
+              <div class="legacy-card p-4">
+                <h2 class="font-bold border-b border-gray-400 mb-2">受取請求書管理</h2>
+                <div class="overflow-x-auto">
+                  <table class="grid-legacy">
+                    <thead>
+                       <tr>
+                         <th>登録日</th><th>ステータス</th><th>請求元</th><th>工事名</th><th>請求金額</th><th>支払予定額</th><th>操作</th><th>削除</th>
+                       </tr>
+                    </thead>
+                    <tbody>
+                       <tr v-for="inv in adminInvoices" :key="inv.id">
+                           <td class="text-center text-[10px]">{{ inv.registeredAt }}</td>
+                           <td class="text-center">
+                             <span :class="{'bg-red-100 text-red-800': inv.status==='未確認', 'bg-green-100 text-green-800': inv.status==='確認済', 'bg-gray-200': inv.status==='支払済'}" class="px-1 rounded text-xs font-bold">{{ inv.status }}</span>
+                           </td>
+                           <td class="font-bold text-center">{{ inv.supplier }}</td>
+                           <td class="text-center truncate max-w-xs">{{ inv.project }}</td>
+                           <td class="text-right font-mono">{{ formatCurrency(inv.amount) }}</td>
+                           <td class="text-right font-mono text-blue-900 font-bold">{{ formatCurrency(inv.payment) }}</td>
+                           <td class="text-center">
+                              <button v-if="inv.status==='未確認'" @click="updateInvoiceStatus(inv.id, '確認済')" class="bg-blue-500 text-white px-2 py-1 text-xs rounded mr-1">確認済にする</button>
+                              <button v-if="inv.status==='確認済'" @click="updateInvoiceStatus(inv.id, '支払済')" class="bg-green-600 text-white px-2 py-1 text-xs rounded">支払済にする</button>
+                           </td>
+                           <td class="text-center"><button @click="deleteItem(inv.id)" class="bg-red-500 text-white px-2 py-1 text-xs rounded hover:bg-red-600">削除</button></td>
+                       </tr>
+                    </tbody>
+                  </table>
+                  <div v-if="adminInvoices.length===0" class="text-center py-4 text-gray-500">受取請求書はありません</div>
+                </div>
+              </div>
+          </div>
+
+          <!-- 経営分析タブ -->
+          <div v-if="adminSubTab === 'analysis'" class="space-y-6">
+              <div class="legacy-card p-4">
+                  <div class="flex justify-between items-center mb-4">
+                      <h2 class="font-bold text-lg">月次売上・粗利推移</h2>
+                      <select v-model="analysisYear" @change="loadAnalysis" class="border p-1">
+                          <option v-for="y in years" :value="y">{{ y }}年</option>
+                      </select>
+                  </div>
+                  <div class="h-64">
+                      <canvas id="salesChart"></canvas>
+                  </div>
+              </div>
+              
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div class="legacy-card p-4">
+                      <h2 class="font-bold mb-2">顧客別売上ランキング (TOP10)</h2>
+                      <table class="grid-legacy">
+                          <thead><tr><th>順位</th><th>顧客名</th><th class="text-right">売上</th><th class="text-right">粗利</th></tr></thead>
+                          <tbody>
+                              <tr v-for="(c, i) in analysisData.ranking" :key="i">
+                                  <td class="text-center">{{ i+1 }}</td>
+                                  <td class="font-bold">{{ c.name }}</td>
+                                  <td class="text-right font-mono">{{ formatCurrency(c.sales) }}</td>
+                                  <td class="text-right font-mono text-green-700">{{ formatCurrency(c.profit) }}</td>
+                              </tr>
+                          </tbody>
+                      </table>
+                  </div>
+                  <div class="legacy-card p-4 flex flex-col justify-center items-center">
+                      <div class="text-gray-500 mb-2">年間総売上</div>
+                      <div class="text-4xl font-bold font-mono text-blue-800">{{ formatCurrency(analysisTotalSales) }}</div>
+                      <div class="text-gray-500 mt-4 mb-2">年間総粗利</div>
+                      <div class="text-3xl font-bold font-mono text-green-700">{{ formatCurrency(analysisTotalProfit) }}</div>
+                  </div>
+              </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <div v-if="currentTab === 'edit'" class="function-bar">
+      <div class="f-btn" @click="createPdf"><span class="material-icons f-icon text-blue-600">print</span>見積PDF</div>
+      <div class="f-btn" @click="createBillPdf"><span class="material-icons f-icon text-purple-600">receipt</span>請求書発行</div>
+      
+      <div class="f-btn" @click="saveEstimate('public')" v-if="!isReviewMode"><span class="material-icons f-icon text-green-600">save</span>下書き保存</div>
+      <div class="f-btn" @click="saveEstimate('admin')" v-if="!isReviewMode"><span class="material-icons f-icon text-orange-600">send</span>管理者提出</div>
+      <div class="f-btn" @click="openDraftModal"><span class="material-icons f-icon">folder_open</span>下書き</div>
+      <div class="f-btn" @click="openSearchModal"><span class="material-icons f-icon">search</span>検索</div>
+      <div class="f-btn" @click="showSetModal = true"><span class="material-icons f-icon">playlist_add</span>セット読込</div>
+      <div class="f-btn" @click="openOcrModal"><span class="material-icons f-icon">document_scanner</span>OCR</div>
+    </div>
+    <div v-if="currentTab === 'editOrder'" class="function-bar">
+      <div class="f-btn" @click="saveOrder('admin')" v-if="!isReviewMode"><span class="material-icons f-icon text-orange-600">send</span>管理者へ提出</div>
+      <div class="f-btn" @click="createOrderPdf"><span class="material-icons f-icon text-blue-600">print</span>発注PDF発行</div>
+    </div>
+
+    <!-- モーダル群 -->
+    <transition name="modal">
+      <div v-if="showSearchModal" class="modal-overlay">
+        <div class="modal-content">
+          <div class="modal-header"><span>データ検索</span><button @click="showSearchModal=false">×</button></div>
+          <div class="modal-body">
+            <div class="flex gap-2 mb-2">
+              <input v-model="searchKeyword" @keyup.enter="performSearch" class="border p-1 flex-1" placeholder="キーワード(顧客名、工事名など)...">
+              <button @click="performSearch" class="bg-gray-200 border px-3">検索</button>
+            </div>
+            <div class="flex gap-2 mb-2">
+              <button @click="searchTab='history'" 
+                class="px-6 py-2 text-sm font-bold border rounded-t-lg transition-colors mr-1 shadow-sm"
+                :class="searchTab==='history' ? 'bg-blue-600 text-white border-blue-600' : 'bg-gray-100 text-gray-600 border-gray-300 hover:bg-gray-200'">
+                見積履歴
+              </button>
+              <button @click="searchTab='master'" 
+                class="px-6 py-2 text-sm font-bold border rounded-t-lg transition-colors mr-1 shadow-sm"
+                :class="searchTab==='master' ? 'bg-blue-600 text-white border-blue-600' : 'bg-gray-100 text-gray-600 border-gray-300 hover:bg-gray-200'">
+                基本・元請単価
+              </button>
+            </div>
+            <table class="grid-legacy">
+              <thead>
+                <tr v-if="searchTab==='history'"><th>日付</th><th>顧客名</th><th>工事名</th><th>品名・仕様</th><th class="text-right">単価</th></tr>
+                <tr v-else><th>種別</th><th>顧客名</th><th>品名・仕様</th><th class="text-right">単価</th></tr>
+              </thead>
+              <tbody>
+                <tr v-for="(item, i) in searchResults" :key="i" class="hover:bg-yellow-100 cursor-pointer" @click="addSearchItem(item)">
+                   <template v-if="searchTab==='history'">
+                      <td>{{ item.date }}</td>
+                      <td>{{ item.client }}</td>
+                      <td>{{ item.project }}</td>
+                      <td>{{ item.product }} {{ item.spec }}</td>
+                      <td class="text-right">{{ formatCurrency(item.price) }}</td>
+                   </template>
+                   <template v-else>
+                      <td>{{ item.type || '-' }}</td>
+                      <td>{{ item.client || '-' }}</td>
+                      <td>{{ item.product }} {{ item.spec }}</td>
+                      <td class="text-right">{{ formatCurrency(item.price) }}</td>
+                   </template>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </transition>
+
+    <transition name="modal"><div v-if="showOcrModal" class="modal-overlay"><div class="modal-content"><div class="modal-header"><span>OCRファイル選択</span><button @click="showOcrModal=false">×</button></div><div class="modal-body"><div v-if="isOcrLoading" class="loader mx-auto"></div><ul v-else class="text-sm"><li v-for="f in ocrFiles" :key="f.id" @click="toggleFileSelection(f)" :class="['p-2 border-b cursor-pointer', selectedOcrFiles.includes(f.id)?'bg-blue-100':'']">{{ f.name }}</li></ul><button @click="executeOcrMulti" class="w-full mt-2 bg-blue-600 text-white p-2">解析開始</button></div></div></div></transition>
+    
+    <!-- 下書き一覧モーダル -->
+    <transition name="modal"><div v-if="showDraftModal" class="modal-overlay"><div class="modal-content"><div class="modal-header"><span>下書き一覧</span><button @click="showDraftModal=false">×</button></div><div class="modal-body">
+      <div v-if="isDraftLoading" class="loader mx-auto"></div>
+      <div v-else>
+        <div class="grid grid-cols-12 gap-2 text-xs font-bold border-b border-gray-400 pb-1 mb-1 px-2">
+           <div class="col-span-3">最終更新日時</div>
+           <div class="col-span-6">件名 (顧客 - 工事)</div>
+           <div class="col-span-3 text-right">金額</div>
+        </div>
+        <ul class="text-sm">
+          <li v-for="d in drafts" :key="d.id" @click="selectDraft(d.id)" class="grid grid-cols-12 gap-2 p-2 border-b cursor-pointer hover:bg-gray-100 items-center">
+            <span class="col-span-3 text-xs text-gray-600">{{ d.date }}</span>
+            <span class="col-span-6 truncate font-bold">{{ d.client }} - {{ d.project }}</span>
+            <span class="col-span-3 text-right font-mono">{{ formatCurrency(d.totalAmount) }}</span>
+          </li>
+        </ul>
+      </div>
+    </div></div></div></transition>
+    
+    <transition name="modal"><div v-if="showSetModal" class="modal-overlay"><div class="modal-content"><div class="modal-header"><span>セット選択</span><button @click="showSetModal=false">×</button></div><div class="modal-body"><ul class="text-sm"><li v-for="s in masters.sets" :key="s" @click="loadSetDetails(s)" class="p-2 border-b cursor-pointer hover:bg-gray-100">{{ s }}</li></ul></div></div></div></transition>
+    
+    <!-- Preview Modal -->
+    <transition name="modal">
+      <div v-if="showPreviewModal" class="modal-overlay" style="z-index: 2500;">
+        <div class="modal-content w-full max-w-5xl h-[80vh]">
+          <div class="modal-header"><span>仕訳データプレビュー</span><button @click="showPreviewModal=false">×</button></div>
+          <div class="modal-body">
+             <div v-if="previewData.headers" class="overflow-auto">
+                 <table class="grid-legacy">
+                     <thead>
+                         <tr><th v-for="h in previewData.headers">{{ h }}</th></tr>
+                     </thead>
+                     <tbody>
+                         <tr v-for="row in previewData.rows">
+                             <td v-for="c in row" class="text-xs px-1 whitespace-nowrap">{{ c }}</td>
+                         </tr>
+                     </tbody>
+                 </table>
+             </div>
+             <div v-else class="text-center p-4">データがありません</div>
+          </div>
+          <div class="p-2 border-t flex justify-end">
+              <button @click="downloadJournalCsv" class="bg-green-600 text-white px-4 py-2 rounded font-bold">CSVダウンロード</button>
+          </div>
+        </div>
+      </div>
+    </transition>
+  </div>
+
+  <script>
+    const gas = (funcName, ...args) => new Promise((resolve, reject) => {
+        if (typeof google === 'undefined' || !google.script) {
+            console.warn("GAS環境ではありません。モックを返します。");
+            if(funcName === 'apiGetAuthStatus') resolve(JSON.stringify({ isAdmin: true, email: 'test@example.com' }));
+            else if(funcName === 'apiGetProjects') resolve('[]');
+            else if(funcName === 'apiGetOrders') resolve('[]'); 
+            else if(funcName === 'apiGetMasters') resolve(JSON.stringify({clients:['テスト建設'], sets:[], vendors:[]}));
+            else reject('GAS Environment not found');
+            return;
+        }
+        google.script.run.withSuccessHandler(resolve).withFailureHandler(err => reject(new Error(err)))[funcName](...args);
+    });
+
+    try {
+        const { createApp, ref, reactive, onMounted, computed, nextTick, watch } = Vue;
+        
+        // Auto-resize directive
+        const vAutoResize = {
+            mounted: (el) => {
+                el.style.height = 'auto';
+                el.style.height = el.scrollHeight + 'px';
+                el.addEventListener('input', () => {
+                    el.style.height = 'auto';
+                    el.style.height = el.scrollHeight + 'px';
+                });
+            },
+            updated: (el) => {
+                el.style.height = 'auto';
+                el.style.height = el.scrollHeight + 'px';
+            }
+        };
+
+        const app = createApp({
+          directives: {
+              autoResize: vAutoResize
+          },
+          setup() {
+            const loading = ref(true); 
+            const loadingMessage = ref("起動中..."); 
+            const currentTab = ref("menu"); 
+            const userEmail = ref(""); 
+            const auth = reactive({ isAdmin: false }); 
+            const masters = reactive({ clients: [], sets: [], vendors: [] });
+            const projects = ref([]); 
+            const orders = ref([]); 
+            const adminInvoices = ref([]); 
+            const isReviewMode = ref(false);
+            const showBackButton = ref(false);
+            const isDirty = ref(false);
+            
+            // 請求書受取用データ
+            const invoiceFiles = ref([]);
+            const selectedInvoiceFile = ref(null);
+            const isAnalyzing = ref(false);
+            const invoiceForm = reactive({ id: "", constructionId: "", project: "", date: "", supplier: "", amount: 0, offset: 0, content: "", fileId: "", status: "未確認" });
+            const activeProjects = ref([]);
+            const orderBalance = ref(null);
+
+            // 会計連携用データ
+            const journalYear = ref(new Date().getFullYear());
+            const journalMonth = ref(new Date().getMonth() + 1);
+            const journalYears = ref([new Date().getFullYear()]);
+            const showPreviewModal = ref(false);
+            const previewData = reactive({ headers: [], rows: [] });
+            const journalIncludeSales = ref(false); 
+            const journalIncludePurchases = ref(true);
+            
+            // サジェスト用
+            const activeSuggestionIdx = ref(null);
+            const filteredSuggestions = ref([]);
+            const showSidePanel = ref(false); const clientHistory = ref([]);
+            
+            // 工事台帳用
+            const showLedgerModal = ref(false);
+            const ledgerData = ref(null);
+
+            // 管理者サブタブ
+            const adminSubTab = ref("approval");
+            const analysisYear = ref(new Date().getFullYear());
+            const analysisData = reactive({ monthly: [], ranking: [] });
+            const analysisTotalSales = computed(() => analysisData.monthly.reduce((s, m) => s + m.sales, 0));
+            const analysisTotalProfit = computed(() => analysisData.monthly.reduce((s, m) => s + m.profit, 0));
+            let salesChartInstance = null;
+            
+            // Notification State & Helper
+            const notifications = ref([]);
+            const notify = (msg, type='success') => {
+                const id = Date.now();
+                notifications.value.push({ id, message: msg, type });
+                setTimeout(() => {
+                    const idx = notifications.value.findIndex(n => n.id === id);
+                    if(idx !== -1) notifications.value.splice(idx, 1);
+                }, 3000);
+            };
+
+            // Custom Confirm State & Helper
+            const confirmState = reactive({ show: false, message: "", resolve: null });
+            const confirmAction = (msg) => {
+                confirmState.message = msg;
+                confirmState.show = true;
+                return new Promise((resolve) => {
+                    confirmState.resolve = resolve;
+                });
+            };
+            const handleConfirm = (result) => {
+                confirmState.show = false;
+                if (confirmState.resolve) {
+                    confirmState.resolve(result);
+                    confirmState.resolve = null;
+                }
+            };
+
+            // 定義 (form, orderForm)
+            const form = reactive({ header: { id: "", date: "", client: "", project: "", location: "", period: "", payment: "", expiry: "", status: "見積提出", visibility: "public" }, items: [] });
+            const filter = reactive({ year: "", month: "", client: "" });
+            const showSearchModal = ref(false); const searchTab = ref("history"); const searchKeyword = ref(""); const searchResults = ref([]); const isSearching = ref(false);
+            const showOcrModal = ref(false); const ocrFiles = ref([]); const isOcrLoading = ref(false); const selectedOcrFiles = ref([]);
+            const showDraftModal = ref(false); const drafts = ref([]); const isDraftLoading = ref(false);
+            const estimateCandidates = ref([]); // 追加
+            const showSetModal = ref(false);
+            
+            // 業者選択モーダル用
+            const showVendorSelectModal = ref(false);
+            const vendorCandidates = ref([]);
+            
+            // サイドパネル用（新規追加）
+            const sidePanelMode = ref(null); // 'history' | 'order' | null
+            const historyList = ref([]);
+            const orderInPanel = reactive({ 
+                vendor: '',
+                items: [] 
+            });
+            // ▼▼▼ 追加: 発注パネル用タブ状態 ▼▼▼
+            const orderPanelTab = ref('create'); // 'create' | 'list'
+            
+            // ▼▼▼ 追加: 現在の見積に関連する発注リストを算出 ▼▼▼
+            const currentEstimateOrders = computed(() => {
+                if (!form.header.id) return [];
+                // orders配列(全発注データ)から、現在の見積IDと紐づくものを抽出
+                // ordersのデータ構造: { id, date, vendor, relEstId, totalAmount, ... }
+                return orders.value.filter(o => o.relEstId === form.header.id);
+            });
+
+            // ▼▼▼ 追加: 保存済み発注書のPDF再発行処理 ▼▼▼
+            const reprintOrderPdf = async (orderId) => {
+                if(!await confirmAction("この発注書のPDFを再発行しますか？")) return;
+                loading.value = true;
+                try {
+                    const res = await gas('apiReprintOrderPdf', orderId);
+                    const r = JSON.parse(res);
+                    if (r.success) {
+                        window.open(r.url);
+                        notify("PDFを再発行しました");
+                    } else {
+                        notify(r.message, "error");
+                    }
+                } catch(e) {
+                    notify("エラー: " + e.message, "error");
+                } finally {
+                    loading.value = false;
+                }
+            };
+            
+
+            // Watch for changes (定義後に配置)
+            watch(() => form.items, () => { isDirty.value = true; }, { deep: true });
+            watch(() => form.header, () => { isDirty.value = true; }, { deep: true });
+            
+            window.addEventListener('beforeunload', (e) => {
+                if (isDirty.value) {
+                    e.preventDefault();
+                    e.returnValue = '';
+                }
+            });
+
+            const adminProjects = computed(() => {
+                if (!Array.isArray(projects.value)) return [];
+                return projects.value.filter(p => p.visibility === 'admin');
+            });
+            const adminOrders = computed(() => {
+                if (!Array.isArray(orders.value)) return [];
+                return orders.value.filter(o => o.visibility === 'admin' || o.status === '管理者確認中');
+            });
+            
+            onMounted(async () => { 
+              try {
+                  const fallback = document.getElementById('loading-fallback');
+                  if(fallback) fallback.style.display = 'none'; 
+                  
+                  const [authRes, mastersJson, projectsJson] = await Promise.all([
+                      gas('apiGetAuthStatus'),
+                      gas('apiGetMasters'),
+                      gas('apiGetProjects')
+                  ]);
+
+                  if (authRes) {
+                    const authData = JSON.parse(authRes);
+                    if (authData) { auth.isAdmin = !!authData.isAdmin; userEmail.value = authData.email || ""; }
+                  }
+                  
+                  const m = JSON.parse(mastersJson); 
+                  masters.clients = m.clients; masters.sets = m.sets; masters.vendors = m.vendors; 
+                  
+                  projects.value = JSON.parse(projectsJson);
+                  
+                  currentTab.value = 'menu';
+                  fetchInvoices();
+              } catch(e) { window.showCriticalError("Initialization Error:\n" + e.message); } 
+              finally { loading.value = false; } 
+            });
+            
+            // サイドパネル制御
+            const toggleSidePanel = async (mode) => {
+              if (sidePanelMode.value === mode) {
+                sidePanelMode.value = null; 
+              } else {
+                sidePanelMode.value = mode;
+                if (mode === 'history') {
+                    await loadEstimateHistory();
+                }
+              }
+            };
+            
+            const loadEstimateHistory = async () => {
+                isDraftLoading.value = true;
+                try {
+                    const res = await gas('apiGetDrafts');
+                    historyList.value = JSON.parse(res);
+                } catch(e) { notify("履歴読込失敗: " + e.message, "error"); }
+                finally { isDraftLoading.value = false; }
+            };
+            
+            // 見積行クリック時の連携処理
+            const handleEstimateRowClick = (item) => {
+                if (sidePanelMode.value === 'order') {
+                    // 発注モードならパネルに追加
+                    if (!item.product) return;
+                    
+                    // 重複チェックはせず、クリックした分だけ追加する仕様とする
+                    orderInPanel.items.push({
+                        product: item.product,
+                        spec: item.spec || "",
+                        qty: item.qty,
+                        unit: item.unit,
+                        cost: item.cost || 0, // 原価を単価としてセット
+                        vendor: item.vendor || "" // 業者があればセット
+                    });
+                    
+                    // もし業者が未設定で、見積行に業者があればパネル全体の業者にセット（最初の1件目のみ）
+                    if (!orderInPanel.vendor && item.vendor) {
+                        orderInPanel.vendor = item.vendor;
+                    }
+                    
+                    notify("発注パネルに追加しました");
+                }
+            };
+            
+            // パネルからの発注保存処理
+            const saveOrderFromPanel = async () => {
+                if (orderInPanel.items.length === 0) return notify("明細がありません", "error");
+                
+                // バリデーション
+                if (!orderInPanel.vendor) return notify("発注先を入力してください", "error");
+                
+                loading.value = true;
+                try {
+                    // 発注書データの構築
+                    const orderData = {
+                        header: {
+                            vendor: orderInPanel.vendor,
+                            relEstId: form.header.id, // 現在開いている見積IDを紐付け
+                            location: form.header.location,
+                            status: "発注書作成",
+                            visibility: "public"
+                        },
+                        items: orderInPanel.items.map(i => ({
+                            category: "発注", // 簡易的に固定
+                            product: i.product,
+                            spec: i.spec,
+                            qty: i.qty,
+                            unit: i.unit,
+                            cost: i.cost, // 発注単価
+                            amount: Math.round(i.qty * i.cost)
+                        }))
+                    };
+                    
+                    const res = await gas('apiSaveOrderOnly', JSON.stringify(orderData));
+                    const r = JSON.parse(res);
+                    if (r.success) {
+                        notify("発注書を作成しました");
+                        // パネルをリセット
+                        orderInPanel.items = [];
+                        orderInPanel.vendor = "";
+                        // 発注一覧を更新する場合はここで再取得処理を入れる
+                    } else {
+                        notify("作成失敗: " + r.message, "error");
+                    }
+                } catch(e) {
+                    notify("エラー: " + e.message, "error");
+                } finally {
+                    loading.value = false;
+                }
+            };
+            
+            const createOrderPdfFromPanel = async () => {
+                 if (orderInPanel.items.length === 0) return notify("明細がありません", "error");
+                 if (!orderInPanel.vendor) return notify("発注先を入力してください", "error");
+                 
+                 loading.value = true;
+                 try {
+                     const orderData = {
+                        header: {
+                            vendor: orderInPanel.vendor,
+                            relEstId: form.header.id,
+                            location: form.header.location,
+                            date: new Date().toLocaleDateString('ja-JP').split('/').join('/'), // 簡易日付
+                            status: "発注書作成",
+                            visibility: "public"
+                        },
+                        items: orderInPanel.items.map(i => ({
+                            category: "発注",
+                            product: i.product,
+                            spec: i.spec,
+                            qty: i.qty,
+                            unit: i.unit,
+                            cost: i.cost,
+                            amount: Math.round(i.qty * i.cost),
+                            vendor: orderInPanel.vendor // ここ重要
+                        }))
+                    };
+                    
+                    // API呼び出し: 第2引数で明示的にベンダーを指定してPDF作成
+                    const res = await gas('apiCreateOrderPdf', JSON.stringify(orderData), orderInPanel.vendor);
+                    const r = JSON.parse(res);
+                    if (r.success) {
+                         window.open(r.url);
+                         notify("PDFを作成しました");
+                    } else {
+                         notify(r.message, "error");
+                    }
+                 } catch(e) {
+                     notify("PDF作成エラー: " + e.message, "error");
+                 } finally {
+                     loading.value = false;
+                 }
+            };
+
+            const goHome = async () => { 
+                if(isDirty.value) {
+                    if(!await confirmAction("保存されていない変更があります。移動しますか？")) return;
+                }
+                isDirty.value = false;
+                isReviewMode.value = false; 
+                currentTab.value = 'menu'; 
+            };
+            const handleBack = () => { if(isReviewMode.value) { currentTab.value = 'admin'; } else { currentTab.value = 'list'; } };
+            const handleNavigation = (tab) => { currentTab.value = tab; };
+            const formatCurrency = (val) => Number(val || 0).toLocaleString();
+            
+            const fetchProjects = async (skipLoading = false) => { 
+                if(!skipLoading) loading.value = true; 
+                try { 
+                    const d = await gas('apiGetProjects'); 
+                    projects.value = JSON.parse(d); 
+                } finally { 
+                    if(!skipLoading) loading.value = false; 
+                } 
+            };
+            const fetchOrders = async () => { 
+                try { 
+                    const d = await gas('apiGetOrders'); 
+                    orders.value = JSON.parse(d); 
+                } catch(e) { console.error(e); orders.value = []; }
+            };
+            const fetchInvoices = async () => {
+                try {
+                    const d = await gas('apiGetInvoices');
+                    adminInvoices.value = JSON.parse(d);
+                } catch(e) { console.error(e); adminInvoices.value = []; }
+            }
+            
+            const goToProjectList = async () => { 
+                if(isDirty.value && !await confirmAction("保存されていない変更があります。破棄して移動しますか？")) return;
+                await fetchProjects();
+                currentTab.value = 'list'; 
+            };
+            const goToInvoice = async () => {
+                if(isDirty.value && !await confirmAction("保存されていない変更があります。破棄して移動しますか？")) return;
+                loading.value = true; 
+                try { 
+                    const pList = await gas('apiGetActiveProjectsList');
+                    activeProjects.value = JSON.parse(pList);
+                    await loadInvoiceFiles();
+                    await fetchInvoices();
+                    resetInvoiceForm();
+                    currentTab.value = 'invoice';
+                } finally { loading.value = false; }
+            };
+            const goToAdmin = async () => {
+                if(isDirty.value && !await confirmAction("保存されていない変更があります。破棄して移動しますか？")) return;
+                if(auth.isAdmin) { 
+                    loading.value=true; 
+                    try{ 
+                        await fetchProjects(true); 
+                        await fetchOrders(); 
+                        await fetchInvoices(); 
+                        const yList = await gas('apiGetJournalYears'); 
+                        journalYears.value = JSON.parse(yList); 
+                        if(journalYears.value.length > 0) journalYear.value = journalYears.value[0]; 
+                        await nextTick(); 
+                        currentTab.value = 'admin'; 
+                        loadAnalysis(); 
+                    } finally { setTimeout(() => { loading.value=false; }, 300); } 
+                }
+            };
+
+            const filteredProjects = computed(() => {
+                let res = projects.value;
+                if (filter.year) res = res.filter(p => new Date(p.date).getFullYear() == filter.year);
+                if (filter.month) res = res.filter(p => new Date(p.date).getMonth() + 1 == filter.month);
+                if (filter.client) res = res.filter(p => p.client === filter.client);
+                return res;
+            });
+            
+            const stats = computed(() => {
+                const s = { totalSales: 0, totalCost: 0, totalInvoiced: 0, totalProfit: 0, margin: 0, pendingPayment: 0 };
+                filteredProjects.value.forEach(p => {
+                    s.totalSales += p.totalAmount;
+                    s.totalCost += p.totalOrderAmount;
+                    s.totalInvoiced += p.totalInvoicedAmount;
+                });
+                s.totalProfit = s.totalSales - s.totalCost;
+                s.margin = s.totalSales ? ((s.totalProfit / s.totalSales) * 100).toFixed(1) : 0;
+                // 簡易計算: 請求書一覧から未払分を集計
+                adminInvoices.value.forEach(inv => {
+                    if (inv.status === '確認済') s.pendingPayment += Number(inv.payment || 0);
+                });
+                return s;
+            });
+            const years = computed(() => {
+                const ys = new Set(projects.value.map(p => new Date(p.date).getFullYear()));
+                return Array.from(ys).sort((a,b)=>b-a);
+            });
+
+            // 見積関連
+            const createNewEstimate = () => {
+                form.header = { id: "", client: "", project: "", location: "", period: "", payment: "", expiry: "", status: "見積提出", visibility: "public" };
+                form.items = [{ category: "", product: "", spec: "", qty: 1, unit: "", price: 0, cost: 0, amount: 0, orderedQty: 0, orderedAmount: 0 }];
+                isReviewMode.value = false;
+                isDirty.value = false;
+                currentTab.value = 'edit';
+            };
+            const loadEstimate = async (id, fromList=false) => {
+                loading.value = true;
+                try {
+                    const res = await gas('apiGetEstimateDetails', id);
+                    const data = JSON.parse(res);
+                    if (data) {
+                        form.header = data.header;
+                        form.items = data.items;
+                        isReviewMode.value = (currentTab.value === 'admin'); 
+                        showBackButton.value = fromList;
+                        isDirty.value = false;
+                        currentTab.value = 'edit';
+                        sidePanelMode.value = null; // パネル閉じる
+                    } else {
+                        notify("データが見つかりません", "error");
+                    }
+                } catch(e) { notify("読込エラー: " + e.message, "error"); }
+                finally { loading.value = false; }
+            };
+            const saveEstimate = async (target) => {
+                loading.value = true;
+                try {
+                    if (target === 'admin') { form.header.status = '管理者確認中'; form.header.visibility = 'admin'; }
+                    else { form.header.visibility = 'public'; }
+                    
+                    const res = await gas('apiSaveUnifiedData', JSON.stringify({ estimate: form }));
+                    const r = JSON.parse(res);
+                    if (r.success) {
+                        form.header.id = r.id;
+                        isDirty.value = false;
+                        notify("保存しました");
+                    } else {
+                        notify("保存失敗: " + r.message, "error");
+                    }
+                } catch(e) { notify("通信エラー: " + e.message, "error"); }
+                finally { loading.value = false; }
+            };
+            
+            const createPdf = async () => {
+                loading.value = true;
+                try {
+                    const res = await gas('apiSaveAndCreateEstimatePdf', JSON.stringify(form));
+                    const r = JSON.parse(res);
+                    if (r.success) {
+                        window.open(r.url);
+                        form.header.id = r.id;
+                        isDirty.value = false;
+                    } else {
+                        notify(r.message, "error");
+                    }
+                } catch(e) { notify("PDF作成エラー: " + e.message, "error"); }
+                finally { loading.value = false; }
+            };
+            
+            const createBillPdf = async () => {
+                if(!form.header.id) return notify("先に見積を保存してください", "error");
+                if(!await confirmAction("請求書を発行しますか？ステータスが「請求済」になります。")) return;
+                loading.value = true;
+                try {
+                    const res = await gas('apiIssueBillFromId', form.header.id);
+                    const r = JSON.parse(res);
+                    if(r.success) {
+                        window.open(r.url);
+                        notify("請求書を発行しました");
+                    } else {
+                        notify(r.message, "error");
+                    }
+                } catch(e) { notify("エラー: " + e.message, "error"); }
+                finally { loading.value = false; }
+            };
+
+            const createOrderPdf = () => {
+                const vendors = new Set();
+                form.items.forEach(item => {
+                    if(item.vendor) vendors.add(item.vendor);
+                });
+                const vendorList = Array.from(vendors);
+
+                if (vendorList.length === 0) {
+                    notify("発注先が入力されている明細がありません。", "error");
+                    return;
+                }
+
+                if (vendorList.length === 1) {
+                    selectVendorAndPrint(vendorList[0]);
+                } else {
+                    vendorCandidates.value = vendorList;
+                    showVendorSelectModal.value = true;
+                }
+            };
+
+            const selectVendorAndPrint = async (vendor) => {
+                showVendorSelectModal.value = false;
+                loading.value = true;
+                try {
+                    await saveEstimate('public'); // 先に保存
+                    const r = JSON.parse(await gas('apiCreateOrderPdf', JSON.stringify(form), vendor));
+                    if(r.success) {
+                        window.open(r.url);
+                        notify("発注書を作成しました");
+                    } else {
+                        notify(r.message, "error");
+                    }
+                } catch(e) {
+                    notify("エラー: " + e.message, "error");
+                } finally {
+                    loading.value = false;
+                }
+            };
+
+            const addItem = () => form.items.push({ category: "", product: "", spec: "", qty: 1, unit: "", price: 0, cost: 0, amount: 0, orderedQty: 0, orderedAmount: 0 });
+            const removeItem = (i) => form.items.splice(i, 1);
+            const calcLine = (item) => {
+                item.amount = Math.round((Number(item.qty)||0) * (Number(item.price)||0));
+                item.orderedAmount = Math.round((Number(item.qty)||0) * (Number(item.cost)||0));
+            };
+            const totalAmount = computed(() => form.items.reduce((s, i) => s + (Number(i.amount) || 0), 0));
+            const totalEstimatedCost = computed(() => form.items.reduce((s, i) => s + (Number(i.orderedAmount) || 0), 0));
+            const calculateMargin = (item) => {
+                const rev = Number(item.amount) || 0;
+                if (!rev) return 0;
+                const cost = Number(item.orderedAmount) || 0;
+                return ((rev - cost) / rev * 100).toFixed(1);
+            };
+
+            // 検索・サジェスト・履歴
+            const showSuggestions = (idx) => { activeSuggestionIdx.value = idx; filteredSuggestions.value = []; }; // 簡易実装
+            const hideSuggestions = () => { setTimeout(() => activeSuggestionIdx.value = null, 200); };
+            const applySuggestion = (idx, s) => { /* 実装省略 */ };
+            const onClientInput = async (e) => {
+                const val = e.target.value;
+                if(!val) { clientHistory.value = []; return; }
+                const res = await gas('apiGetClientHistory', val);
+                clientHistory.value = JSON.parse(res);
+                if(clientHistory.value.length > 0) showSidePanel.value = true;
+            };
+            const copyHistoryItem = (item) => {
+                form.items.push({ ...item, qty: 1, amount: item.price, orderedQty: 0, orderedAmount: 0 });
+                calcLine(form.items[form.items.length-1]);
+                notify("履歴から追加しました");
+            };
+            
+            // 請求書・OCR・台帳・分析等の残りのロジック
+            const loadInvoiceFiles = async () => { invoiceFiles.value = JSON.parse(await gas('apiListInvoiceDriveFiles')); };
+            const selectInvoiceFile = async (f) => { selectedInvoiceFile.value = f; isAnalyzing.value = true; invoiceForm.fileId = f.id; invoiceForm.id = ""; try { const r = JSON.parse(await gas('apiParseInvoiceFile', f.id)); Object.assign(invoiceForm, r); if(invoiceForm.constructionId) checkOrderBalance(); } finally { isAnalyzing.value = false; } };
+            const resetInvoiceForm = () => { Object.assign(invoiceForm, { id: "", constructionId: "", project: "", date: "", supplier: "", amount: 0, offset: 0, content: "", fileId: "", status: "未確認" }); selectedInvoiceFile.value = null; };
+            const checkOrderBalance = async () => { if(invoiceForm.constructionId && invoiceForm.supplier) orderBalance.value = JSON.parse(await gas('apiGetOrderBalance', invoiceForm.constructionId, invoiceForm.supplier)); };
+            const onProjectSelect = (e) => { const val = e.target.value; const p = activeProjects.value.find(ap => ap.name === val); if(p) { invoiceForm.constructionId = p.id; invoiceForm.project = p.name; checkOrderBalance(); } };
+            const registerInvoice = async () => { if(!invoiceForm.id && !selectedInvoiceFile.value) return notify("ファイル未選択", "error"); loading.value = true; try { const r = JSON.parse(await gas('apiSaveInvoice', JSON.stringify(invoiceForm))); if(r.success) { notify("登録しました"); resetInvoiceForm(); loadInvoiceFiles(); fetchInvoices(); } } finally { loading.value = false; } };
+            const editInvoice = (inv) => { Object.assign(invoiceForm, inv); selectedInvoiceFile.value = null; checkOrderBalance(); };
+            const updateInvoiceStatus = async (id, st) => { await gas('apiUpdateInvoiceStatus', id, st); fetchInvoices(); };
+            const deleteItem = async (id) => { if(await confirmAction("削除しますか？")) { await gas('apiDeleteData', id); notify("削除しました"); if(currentTab.value==='admin') goToAdmin(); } };
+            
+            const openLedger = async (id) => { loading.value = true; try { ledgerData.value = JSON.parse(await gas('apiGetProjectLedger', id)); showLedgerModal.value = true; } finally { loading.value = false; } };
+            const createLedgerPdf = async () => { loading.value = true; try { const r = JSON.parse(await gas('apiCreateLedgerPdf', JSON.stringify(ledgerData.value))); if(r.success) window.open(r.url); } finally { loading.value = false; } };
+            
+            const loadAnalysis = async () => { adminSubTab.value = 'analysis'; loading.value = true; try { const d = JSON.parse(await gas('apiGetAnalysisData', analysisYear.value)); analysisData.monthly = d.monthly; analysisData.ranking = d.ranking; nextTick(renderChart); } finally { loading.value = false; } };
+            const renderChart = () => {
+                const ctx = document.getElementById('salesChart'); if(!ctx) return;
+                if(salesChartInstance) salesChartInstance.destroy();
+                salesChartInstance = new Chart(ctx, { type: 'bar', data: { labels: [1,2,3,4,5,6,7,8,9,10,11,12].map(m=>m+'月'), datasets: [{label:'売上', data: analysisData.monthly.map(m=>m.sales), backgroundColor:'#3B82F6'}, {label:'粗利', data: analysisData.monthly.map(m=>m.profit), backgroundColor:'#10B981'}] } });
+            };
+            
+            const openDraftModal = async () => { showDraftModal.value = true; isDraftLoading.value = true; try { drafts.value = JSON.parse(await gas('apiGetDrafts')).filter(i => i.status === '下書き'); } finally { isDraftLoading.value = false; } };
+            const selectDraft = (id) => { showDraftModal.value = false; loadEstimate(id); };
+            const openSearchModal = () => { showSearchModal.value = true; };
+            const openOcrModal = async () => { showOcrModal.value = true; isOcrLoading.value = true; try { ocrFiles.value = JSON.parse(await gas('apiListDriveFiles')); } finally { isOcrLoading.value = false; } };
+            const toggleFileSelection = (f) => { const idx = selectedOcrFiles.value.indexOf(f.id); if(idx>=0) selectedOcrFiles.value.splice(idx,1); else selectedOcrFiles.value.push(f.id); };
+            const executeOcrMulti = async () => { loading.value = true; showOcrModal.value = false; try { const res = await gas('apiParseInvoiceFile', selectedOcrFiles.value[0]); /* 簡易実装 */ } finally { loading.value = false; } };
+            
+            // 会計連携
+            const showPreview = async () => { loading.value = true; try { const res = JSON.parse(await gas('apiPreviewJournalData', journalYear.value, journalMonth.value, journalIncludeSales.value, journalIncludePurchases.value)); previewData.headers = res.headers; previewData.rows = res.rows; showPreviewModal.value = true; } finally { loading.value = false; } };
+            const downloadJournalCsv = async () => { loading.value = true; try { const res = JSON.parse(await gas('apiGenerateJournalData', journalYear.value, journalMonth.value, journalIncludeSales.value, journalIncludePurchases.value)); if(res.success) { const a = document.createElement('a'); a.href = "data:text/csv;base64," + res.data; a.download = res.filename; a.click(); } } finally { loading.value = false; } };
+
+            return {
+                loading, loadingMessage, currentTab, userEmail, auth, masters, projects, orders, adminInvoices, isReviewMode, showBackButton, isDirty,
+                invoiceFiles, selectedInvoiceFile, isAnalyzing, invoiceForm, activeProjects, orderBalance,
+                journalYear, journalMonth, journalYears, showPreviewModal, previewData, journalIncludeSales, journalIncludePurchases,
+                activeSuggestionIdx, filteredSuggestions, showSidePanel, clientHistory,
+                showLedgerModal, ledgerData, adminSubTab, analysisYear, analysisData, analysisTotalSales, analysisTotalProfit,
+                notifications, confirmState, form, filter, showSearchModal, searchTab, searchKeyword, searchResults, isSearching,
+                showOcrModal, ocrFiles, isOcrLoading, selectedOcrFiles, showDraftModal, drafts, isDraftLoading, estimateCandidates, showSetModal,
+                showVendorSelectModal, vendorCandidates,
+                // New Side Panel Features
+                sidePanelMode, historyList, orderInPanel, toggleSidePanel, handleEstimateRowClick, saveOrderFromPanel, createOrderPdfFromPanel, orderPanelTab, currentEstimateOrders, reprintOrderPdf,
+                // Methods
+                goHome, handleBack, handleNavigation, formatCurrency, fetchProjects, fetchOrders, fetchInvoices, loadInvoiceFiles, goToProjectList, goToInvoice, goToAdmin, filteredProjects, stats, years, adminProjects, adminOrders,
+                createNewEstimate, loadEstimate, saveEstimate, createPdf, createBillPdf, createOrderPdf, selectVendorAndPrint,
+                addItem, removeItem, calcLine, totalAmount, totalEstimatedCost, calculateMargin,
+                showSuggestions, hideSuggestions, applySuggestion, onClientInput, copyHistoryItem,
+                selectInvoiceFile, resetInvoiceForm, checkOrderBalance, onProjectSelect, registerInvoice, editInvoice, updateInvoiceStatus, deleteItem,
+                openLedger, createLedgerPdf, loadAnalysis, openDraftModal, selectDraft, openSearchModal, openOcrModal, toggleFileSelection, executeOcrMulti,
+                showPreview, downloadJournalCsv, confirmAction, handleConfirm
+            };
+          }
+        });
+        
+        app.mount('#app');
+        
+    } catch (e) {
+        document.getElementById('critical-error').style.display = 'block';
+        document.getElementById('critical-error').textContent = "Frontend Error: " + e.message;
+    }
+  </script>
+</body>
+</html>
